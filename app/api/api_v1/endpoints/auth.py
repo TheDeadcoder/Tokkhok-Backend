@@ -35,7 +35,7 @@ async def sign_up(user: UserAuth):
 #   Log in with email and password
 #################################################################################################
 @router.post("/signin")
-async def sign_in(user: UserAuth, ):
+async def sign_in(user: UserAuth, db: Session = Depends(deps.get_db)):
     try:
         response = supabase.auth.sign_in_with_password({
             'email': user.email,
@@ -45,10 +45,28 @@ async def sign_in(user: UserAuth, ):
             raise HTTPException(status_code=400, detail="Sign-in failed")
         
         user_id = response.session.user.id
+        user_email = response.session.user.email
+        user_name = user_email.split('@')[0]
+        db_user = db.query(UserModel).filter(UserModel.id == user_id).first()
+        if not db_user:
+            db_user = UserModel(
+                id = user_id,
+                userName=user_name,
+                email=user_email
+            )
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+
+        
+
+
+
+
 
 
         print(user_id)
-        return {"message": "User signed in successfully", "session": response.session}
+        return {"message": "User signed in successfully", "session": response.session, "user": db_user}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
