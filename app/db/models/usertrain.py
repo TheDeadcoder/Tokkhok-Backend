@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, ARRAY, TIMESTAMP, UUID, Integer, ForeignKey
+from sqlalchemy import Column, String, ARRAY, TIMESTAMP, UUID, Integer, ForeignKey, Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
@@ -14,6 +14,7 @@ class UserTrain(Base):
     banglish = Column(String, nullable=False)
     bangla = Column(String, nullable=False)
 
+    is_approved = Column(Boolean, nullable=False, default=False)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
