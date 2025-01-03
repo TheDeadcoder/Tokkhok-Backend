@@ -35,14 +35,15 @@ def make_collection(collection_name:str):
 #   Helper function to upload into qdrant cloud
 #   input: modular file, page_no, semantic chunks, summaries and output: nothing
 #################################################################################################
-def upload_to_qdrant(file_id: str, file_url:str, file_title:str, file_summary: str, collection_name: str,privacy_status: str):
+def upload_to_qdrant(file_id: str, file_url:str, file_title:str, file_summary: str, collection_name: str,privacy_status: str, content: str):
         make_collection(collection_name)
         payload = {
             "file_id": file_id,
             "file_summary": file_summary,
             "file_url": file_url,
             "file_title": file_title,
-            "privacy_status": privacy_status
+            "privacy_status": privacy_status,
+            "content": content
         }
 
         str_to_embed = file_summary
@@ -124,8 +125,24 @@ def delete_points_by_uuid(collection_name, uuid):
 #   input: collection, query and limit and output: array of vector points
 #################################################################################################
 
-def search_in_qdrant(collection_name, query, limit):
+def search_in_qdrant(collection_name, query, limit, file_ids):
     try:
+        # filter_conditions = {
+        #     "must": [
+        #         {
+        #             "key": "type",
+        #             "match": {"any": file_ids}
+        #         }
+        #     ]
+        # }
+        filter_conditions = models.Filter(
+            must=[
+                models.FieldCondition(
+                    key="file_id",
+                    match=models.MatchAny(any=file_ids)
+                )
+            ]
+        )   
         embedding = create_embedding(query)
         results = qdrantClient.search(
                 collection_name = collection_name,
@@ -133,6 +150,7 @@ def search_in_qdrant(collection_name, query, limit):
                 limit=limit,
                 with_payload=True,
                 with_vectors=False,
+                query_filter=filter_conditions  
             )
 
         return results

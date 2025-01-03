@@ -15,6 +15,7 @@ class ChatUpdate(BaseModel):
 class Chat(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
+    public_file_ids: Optional[List[uuid.UUID]] = []
     
     chat_name: str
     

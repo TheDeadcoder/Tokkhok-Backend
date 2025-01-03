@@ -1,14 +1,18 @@
 from typing import List
 import uuid
+from app.helpers.chatcompletion import response_first, response_later
+from app.helpers.qdrant import search_in_qdrant
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload, contains_eager, subqueryload
 from sqlalchemy.exc import SQLAlchemyError
 from pydantic import ValidationError
+from app.helpers.prompt_normalize import prompt_normalize_first, prompt_normalize_later
 
 from app.api import deps
 from app.schemas.chats import Chat, ChatCreate, ChatUpdate, ChatWithMessages, ChatResponse
 from app.db.models.chats import Chat as ChatModel
 from app.db.models.messages import Message as MessageModel
+from app.db.models.files import File as FileModel
 from app.schemas.messages import Message, MessageCreate
 
 from app.core.config import settings
@@ -26,7 +30,8 @@ async def create_chat(*, db: Session = Depends(deps.get_db), chat_in: ChatCreate
     try:
         db_chat = ChatModel(
             user_id = chat_in.user_id,
-            chat_name = chat_in.chat_name
+            chat_name = chat_in.chat_name,
+            selected_public_file_ids = chat_in.public_file_ids
         )
         db.add(db_chat)
         db.commit()
@@ -43,15 +48,40 @@ async def create_chat(*, db: Session = Depends(deps.get_db), chat_in: ChatCreate
         db.refresh(db_message_user)
         
         queryText = db_chat.chat_name
+
+        standardized_prompt = prompt_normalize_first(queryText)
+        my_files = db.query(FileModel.id).filter(FileModel.uploader_id == chat_in.user_id).all()
+
+        # Extract the file IDs from the query result as a list
+        my_file_ids = [file.id for file in my_files]
+
+        # Combine my_file_ids and given_files into a unique set of IDs
+        merged_file_ids = list(set(my_file_ids + chat_in.public_file_ids))
+        # convert into an array of string
+        merged_file_ids = [str(file_id) for file_id in merged_file_ids]
+
+        knowledge = search_in_qdrant(settings.COLLECTION_NAME, standardized_prompt, 10, merged_file_ids)
+        print(knowledge)
+
+        combined_result = ""
+        result_list = []
+        for result in knowledge:
+            combined_result += f"## file_title: {result.payload.get('file_title')}\n"
+            combined_result += f"file_summary: {result.payload.get('file_summary')}\n"
+            combined_result += f"content: {result.payload.get('content')}\n\n"
+            result.payload['id'] = result.id
+            result_list.append(result.payload)
+
+
         
-        openai_response = "chat initiate response"
+        openai_response = response_first(standardized_prompt, combined_result)
         print(openai_response)
         
         db_message_assistant = MessageModel(
             chat_id=db_chat.id,
             sender="assistant",
             content=openai_response,
-            knowledge=[]
+            knowledge=result_list
         )
         
         db.add(db_message_assistant)
@@ -136,16 +166,40 @@ async def update_chat(*, db: Session = Depends(deps.get_db), chat_id: uuid.UUID,
             chat_history += f"{sender}: {currMessage.content}\n\n"
 
         print(chat_history)
-        
+
+        standardize_last_query = prompt_normalize_later(chat_history)
+        print("*****************************")
+        print(standardize_last_query)
+
+        my_files = db.query(FileModel.id).filter(FileModel.uploader_id == db_chat.user_id).all()
+
+        # Extract the file IDs from the query result as a list
+        my_file_ids = [file.id for file in my_files]
+
+        # Combine my_file_ids and given_files into a unique set of IDs
+        merged_file_ids = list(set(my_file_ids + db_chat.selected_public_file_ids))
+        # convert into an array of string
+        merged_file_ids = [str(file_id) for file_id in merged_file_ids]
+
+        knowledge = search_in_qdrant(settings.COLLECTION_NAME, standardize_last_query, 10, merged_file_ids)
+
+        combined_result = ""
+        result_list = []
+        for result in knowledge:
+            combined_result += f"## file_title: {result.payload.get('file_title')}\n"
+            combined_result += f"file_summary: {result.payload.get('file_summary')}\n"
+            combined_result += f"content: {result.payload.get('content')}\n\n"
+            result.payload['id'] = result.id
+            result_list.append(result.payload)
 
         
-        openai_response = chat_history
+        openai_response = response_later(chat_history, combined_result)
 
         db_message_assistant = MessageModel(
             chat_id=db_chat.id,
             sender="assistant",
             content=openai_response,
-            knowledge=[]
+            knowledge=result_list
         )
         
         db.add(db_message_assistant)

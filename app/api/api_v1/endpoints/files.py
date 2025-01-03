@@ -78,7 +78,7 @@ async def get_all_public_files_cross_platform(db: Session = Depends(deps.get_db)
 PDF_DIR = "uploaded_files"
 
 def create_bengali_pdf_weasy(bengali_text: str, output_path: str):
-    curated_bd_text = bengali_text.replace('\\n', '<br>')
+    curated_bd_text = bengali_text.replace('\n', '<br>')
     html_content = f"""
     <!DOCTYPE html>
     <html lang="bn">
@@ -151,7 +151,7 @@ async def create_file(
         db.commit()
         db.refresh(db_file)
 
-        upload_to_qdrant(str(db_file.id), public_url, file_title, file_summary, settings.COLLECTION_NAME, query.privacy_status)
+        upload_to_qdrant(str(db_file.id), public_url, file_title, file_summary, settings.COLLECTION_NAME, query.privacy_status, query.text)
 
         # Remove the local file after uploading
         os.remove(output_path)
