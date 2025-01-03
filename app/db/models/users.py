@@ -13,3 +13,5 @@ class User(Base):
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    chats = relationship("Chat", back_populates="user", cascade="all, delete-orphan")
