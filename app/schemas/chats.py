@@ -6,6 +6,7 @@ from app.schemas.messages import Message
 
 class ChatCreate(BaseModel):
     user_id: uuid.UUID
+    public_file_ids: Optional[List[uuid.UUID]] = []
     chat_name: str
     
 class ChatUpdate(BaseModel):

@@ -16,3 +16,5 @@ class User(Base):
 
     chats = relationship("Chat", back_populates="user", cascade="all, delete-orphan")
     user_train = relationship("UserTrain", back_populates="user", cascade="all, delete-orphan")
+
+    files = relationship('File', back_populates='uploader')
