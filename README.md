@@ -1,9 +1,17 @@
 # Running the Backend
 
 ## Virtual environment
+Make sure python3-venv is in your machine
+```bash
+sudo apt install python3-venv
+```
 Make a python virtual environment with the following command:
 ```bash
 python3 -m venv .venv
+```
+activate the environment
+```bash
+source .venv/bin/activate
 ```
 
 ## Install dependencies
