@@ -18,3 +18,4 @@ class User(Base):
     user_train = relationship("UserTrain", back_populates="user", cascade="all, delete-orphan")
 
     files = relationship('File', back_populates='uploader')
+    translations = relationship('Translation', back_populates='user', cascade='all, delete-orphan')
