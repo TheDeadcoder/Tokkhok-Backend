@@ -71,6 +71,9 @@ we have used Qdrant for vector database
 ## Embedding model
 we have used the text-embedding-3-large model for generating embedding
 
+## Pdf Font
+used [Noto-Sans font from Google fonts](https://fonts.google.com/noto/specimen/Noto+Sans+Bengali?query=bangla)
+
 ## File-ingestion Pipeline
 - We receive the "pure bangla text" from the text editor
 - we generate a suitable title and caption for the file

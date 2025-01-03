@@ -61,5 +61,34 @@ def response_later(conversation_history: str, knowledge: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating chat completion: {str(e)}")
     
+
+
+def response_audio(query: str, knowledge: str):
+    print("in audio response")
+    system_prompt = f"""
+    You are a helpful assistant. You are expert in Bengali language.
+    You will receive a query in English. 
+    Also you will receive relevant knowledge source. The knowledge source is in Bengali.
+    Your job is to generate high-quality response to the query. You MUST output in Bengali. Otherwise, you will be penalized $500.
+    You MUST use the knowledge source to generate the response. If you dont find the answer in the knowledge source, you can use your knowledge generate the response.
+    You MUST return the response string only and nothing else. Otherwise, you will be penalized $500.
+    """
+
+    human_prompt = f"""
+    Query: {query}
+    Knowledge: {knowledge}
+    """
     
+    try:
+        response = openaiClient.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": human_prompt},
+            ],
+            temperature=0.5,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating chat completion: {str(e)}")
 
