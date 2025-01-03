@@ -87,6 +87,13 @@ we have used the text-embedding-3-large model for generating embedding
 - we fetch k-most relevant chunks
 - then we feed the query and fetched chunks to AI-agent
 - AI agent then generates Bengali response using our custom knowledge base
+
+## Translation Generation:
+- We have used Few-shot prompting that is used as a technique to enable in-context learning
+- Our users contribute in geenrating learning samples ({banglish, bangla} pairs)
+- admins approve some of them
+- The approved pairs are used as few shot inferencing
+- Future plan is to run a cron job (after 1 week) to collect the approved samples and use them to train model using openai's fine-tune api. Currently it could not be done due to costing reasons
   
 
 ## deployment
