@@ -1,23 +1,17 @@
 from typing import List, Optional
-from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel
+from uuid import UUID
 
 class UserBase(BaseModel):
-    name: str
-    address: Optional[str] = None
-    country: Optional[str] = None
-    occupation: Optional[str] = None
+    userName: str
     email: str
 
 class UserCreate(UserBase):
     pass
 
 class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    address: Optional[str] = None
-    country: Optional[str] = None
-    occupation: Optional[str] = None
+    userName: Optional[str] = None
 
 class UserInDBBase(UserBase):
     id: UUID

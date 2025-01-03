@@ -41,18 +41,10 @@ execute the following command
 ./push.sh
 ```
 
-## See the outputs.
-- GET all ingredients available to a user
-![ingredients](https://cyzajynbjmgjijpbdgvg.supabase.co/storage/v1/object/public/statics/user_ingredients.jpg)
+## Authentication
+using supabase authentication
 
-- GET all recipes available to a user
-![recipes](https://cyzajynbjmgjijpbdgvg.supabase.co/storage/v1/object/public/statics/user_recipes.jpg)
-
-- AI response
-![ai](https://cyzajynbjmgjijpbdgvg.supabase.co/storage/v1/object/public/statics/ai_chat.jpg)
-
-
-## Env file
-[Drive link for env](https://drive.google.com/file/d/1_K_W5638rK1AQlSNNzYv3ZknqWZn6VCb/view?usp=sharing)
+- SMTP
+  Using Gmail custom smtp (smtp.gmail.com) and therefore can handle 1100 user mail authentication in 1 hour
   
 

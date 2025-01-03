@@ -8,3 +8,12 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def get_current_user_id(request: Request):
+    user_id = getattr(request.state, 'user_id', None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return user_id
+
+def get_current_user_id_optional(request: Request):
+    return getattr(request.state, 'user_id', None)   
