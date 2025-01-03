@@ -11,6 +11,6 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
     QDRANT_HOST: str = os.getenv("QDRANT_HOST")
     QDRANT_API_KEY: str = os.getenv("QDRANT_API_KEY")
-
+    COLLECTION_NAME: str = "file_collection"
 
 settings = Settings()
