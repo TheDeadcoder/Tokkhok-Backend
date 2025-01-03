@@ -78,29 +78,31 @@ async def get_all_public_files_cross_platform(db: Session = Depends(deps.get_db)
 PDF_DIR = "uploaded_files"
 
 def create_bengali_pdf_weasy(bengali_text: str, output_path: str):
+    curated_bd_text = bengali_text.replace('\\n', '<br>')
     html_content = f"""
     <!DOCTYPE html>
     <html lang="bn">
     <head>
-      <meta charset="utf-8">
-      <style>
+    <meta charset="utf-8">
+    <style>
         @font-face {{
-          font-family: "NotoSansBengali";
-          src: url("uploaded_files/noto.ttf");
+        font-family: "NotoSansBengali";
+        src: url("uploaded_files/noto.ttf");
         }}
         body {{
-          font-family: "NotoSansBengali", sans-serif;
-          font-size: 16px;
-          margin: 50px;
-          line-height: 1.5;
+        font-family: "NotoSansBengali", sans-serif;
+        font-size: 16px;
+        margin: 50px;
+        line-height: 1.5;
         }}
-      </style>
+    </style>
     </head>
     <body>
-      <p>{bengali_text.replace('\n', '<br>')}</p>
+    <p>{curated_bd_text}</p>
     </body>
     </html>
     """
+
     
     HTML(string=html_content).write_pdf(output_path)
     return output_path
