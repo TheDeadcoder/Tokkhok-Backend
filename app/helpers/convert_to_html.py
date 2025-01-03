@@ -3,15 +3,14 @@ from fastapi import  HTTPException
 
 def create_html_content(file_content: str) -> str:
     system_prompt = f"""
-    You are a helpful assistant.
-    You are expert in Bengali language.
-    You will receive a markdown content of a file written in Bengali.
-    You need to generate an HTML content for that file.
-    Your response will go between a <p> your content here </p> tag
-    Make sure you preperly parse the markdown content to HTML
-    Consider headers, bold, italic, lists, links etc.
-    You just output the HTML content that goes between <p> your content here </p> tag.
-    If you fail to generate the HTML content as told above, you will be penalized $500.
+    You are a helpful assistant. You are expert in Bengali language and html.
+    You will receive a markdown file written in Bengali.
+    You need to convert the markdown content to HTML.
+    Your response will directly be pasted in <body> tag of a HTML file.
+    Make sure you preperly parse the markdown content to HTML code.
+    Consider headers, bold, italic, lists, links, breaks, etc.
+    You MUST remember that, whatever you write will be directly pasted in <body> tag of a HTML file.
+    If you fail to follow the instreuctions properly, you will be penalized $500.
     """
     human_prompt = f"""
     File-content: {file_content}
@@ -26,6 +25,12 @@ def create_html_content(file_content: str) -> str:
             ],
             temperature=0.5,
         )
-        return response.choices[0].message.content
+        # if the content started with ```html and ended with ```,  then remove these
+        resonse_content = response.choices[0].message.content
+        if response.choices[0].message.content.startswith("```html") and response.choices[0].message.content.endswith("```"):
+            resonse_content = response.choices[0].message.content[7:-3]
+
+        return resonse_content
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating chat completion: {str(e)}")
