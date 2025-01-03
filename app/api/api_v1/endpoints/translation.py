@@ -8,7 +8,7 @@ import uuid
 from app.api import deps
 from app.db.models.usertrain import UserTrain as UserTrainModel
 from app.db.models.translations import Translation as TranslationModel
-
+import requests
 from app.schemas.usertrain import userTrainBase, userTrainCreate, userTrainUpdate, userTrainInDBBase
 from app.schemas.translate import TranslationBase, TranslationCreate, TranslationUpdate, TranslationInDBBase
 
@@ -47,5 +47,36 @@ async def generate_translation(*, db: Session = Depends(deps.get_db), translatio
         db.refresh(db_translation)
 
         return db_translation
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Unexpected error: " + str(e))
+    
+
+
+@router.post("/word")
+async def generate_translation(*, db: Session = Depends(deps.get_db), translation_in: str):
+    try:
+        url = "https://www.google.com/inputtools/request"
+        
+        params = {
+            "text": translation_in,
+            "ime": "transliteration_en_bn",
+            "num": 2,
+            "ie": "utf-8",
+            "oe": "utf-8",
+            "app": "jsapi",
+        }
+
+        
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            data = response.json()
+        
+            if data[0] == "SUCCESS" and data[1] and data[1][0][1]:
+                transliterated_text = data[1][0][1][0]  # First suggestion
+                return transliterated_text
+            else:
+                raise HTTPException(status_code=400, detail="No transliteration suggestions found")
+        else:
+            raise HTTPException(status_code=response.status_code, detail="API Error")
     except Exception as e:
         raise HTTPException(status_code=500, detail="Unexpected error: " + str(e))
