@@ -29,4 +29,8 @@ class ChatResponse(Chat):
 
 class ChatWithMessages(Chat):
     messages: List[Message]
+
+class OpenAiResponse(BaseModel):
+    response: str
+    used_resources: List[str]
     

@@ -66,7 +66,8 @@ async def create_chat(*, db: Session = Depends(deps.get_db), chat_in: ChatCreate
         combined_result = ""
         result_list = []
         for result in knowledge:
-            combined_result += f"## file_title: {result.payload.get('file_title')}\n"
+            combined_result += f"## point_id: {result.id}\n"
+            combined_result += f"file_title: {result.payload.get('file_title')}\n"
             combined_result += f"file_summary: {result.payload.get('file_summary')}\n"
             combined_result += f"content: {result.payload.get('content')}\n\n"
             result.payload['id'] = result.id
@@ -76,12 +77,19 @@ async def create_chat(*, db: Session = Depends(deps.get_db), chat_in: ChatCreate
         
         openai_response = response_first(standardized_prompt, combined_result)
         print(openai_response)
+
+        response_content = openai_response.response
+        used_resources = set(openai_response.used_resources)
+
+        filtered_result_list = [
+            result for result in result_list if str(result.get('id')) in used_resources
+        ]
         
         db_message_assistant = MessageModel(
             chat_id=db_chat.id,
             sender="assistant",
-            content=openai_response,
-            knowledge=result_list
+            content=response_content,
+            knowledge=filtered_result_list
         )
         
         db.add(db_message_assistant)
@@ -186,7 +194,8 @@ async def update_chat(*, db: Session = Depends(deps.get_db), chat_id: uuid.UUID,
         combined_result = ""
         result_list = []
         for result in knowledge:
-            combined_result += f"## file_title: {result.payload.get('file_title')}\n"
+            combined_result += f"## point_id: {result.id}\n"
+            combined_result += f"file_title: {result.payload.get('file_title')}\n"
             combined_result += f"file_summary: {result.payload.get('file_summary')}\n"
             combined_result += f"content: {result.payload.get('content')}\n\n"
             result.payload['id'] = result.id
@@ -195,11 +204,18 @@ async def update_chat(*, db: Session = Depends(deps.get_db), chat_id: uuid.UUID,
         
         openai_response = response_later(chat_history, combined_result)
 
+        response_content = openai_response.response
+        used_resources = set(openai_response.used_resources)
+
+        filtered_result_list = [
+            result for result in result_list if str(result.get('id')) in used_resources
+        ]
+
         db_message_assistant = MessageModel(
             chat_id=db_chat.id,
             sender="assistant",
-            content=openai_response,
-            knowledge=result_list
+            content=response_content,
+            knowledge=filtered_result_list
         )
         
         db.add(db_message_assistant)

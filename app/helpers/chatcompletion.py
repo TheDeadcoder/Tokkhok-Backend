@@ -1,14 +1,17 @@
 from app.core.openai import openaiClient
 from fastapi import  HTTPException
-def response_first(query: str, knowledge: str):
+from app.schemas.chats import OpenAiResponse
+def response_first(query: str, knowledge: str) -> OpenAiResponse:
     
     system_prompt = f"""
     You are a helpful assistant. You are expert in Bengali language.
     You will receive a query in Bangla. 
     Also you will receive relevant knowledge source.
     Your job is to generate high-quality response to the query. You MUST output in Bengali. Otherwise, you will be penalized $500.
-    You MUST use the knowledge source to generate the response.
-    Your response MUST be in markdown
+    You MUST use the knowledge source to generate the response. You MUST filter out only the knowledge points that you used to generate the response.
+    You MUST follow the output format for a Response
+    - response: <Your response in markdown format>
+    - used_resources: <a List of vector-point IDs that you used while generating the response> 
     """
 
     human_prompt = f"""
@@ -17,20 +20,21 @@ def response_first(query: str, knowledge: str):
     """
     
     try:
-        response = openaiClient.chat.completions.create(
+        completion = openaiClient.beta.chat.completions.parse(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": human_prompt},
             ],
+            response_format=OpenAiResponse,
             temperature=0.5,
         )
-        return response.choices[0].message.content
+        return completion.choices[0].message.parsed
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating chat completion: {str(e)}")
     
 
-def response_later(conversation_history: str, knowledge: str):
+def response_later(conversation_history: str, knowledge: str) -> OpenAiResponse:
     
     system_prompt = f"""
     You are a helpful assistant. You are expert in Bengali language.
@@ -39,8 +43,10 @@ def response_later(conversation_history: str, knowledge: str):
     The last user-message is the query.
     You will receive relevant knowledge source to respond to the query.
     Your job is to generate high-quality response to the query. You MUST output in Bengali. Otherwise, you will be penalized $500.
-    You MUST use the knowledge source to generate the response.
-    Your response MUST be in markdown
+    You MUST use the knowledge source to generate the response. You MUST filter out only the knowledge points that you used to generate the response.
+    You MUST follow the output format for a Response
+    - response: <Your response in markdown format>
+    - used_resources: <a List of vector-point IDs that you used while generating the response>
     """
 
     human_prompt = f"""
@@ -49,15 +55,16 @@ def response_later(conversation_history: str, knowledge: str):
     """
     
     try:
-        response = openaiClient.chat.completions.create(
+        completion = openaiClient.beta.chat.completions.parse(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": human_prompt},
             ],
+            response_format=OpenAiResponse,
             temperature=0.5,
         )
-        return response.choices[0].message.content
+        return completion.choices[0].message.parsed
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating chat completion: {str(e)}")
     
