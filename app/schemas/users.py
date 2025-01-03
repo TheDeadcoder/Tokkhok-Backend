@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     email: str
 
 class UserCreate(UserBase):
+    id: UUID
     pass
 
 class UserUpdate(BaseModel):

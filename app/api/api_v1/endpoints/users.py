@@ -52,6 +52,7 @@ async def create_user(*, db: Session = Depends(deps.get_db), user_in: UserCreate
                 raise HTTPException(status_code=400, detail="Invalid Email")
             
         db_user = UserModel(
+            id = user_in.id,
             userName=user_in.userName,
             email=user_in.email
         )
