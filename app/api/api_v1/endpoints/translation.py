@@ -1,6 +1,6 @@
 from typing import List
 from app.helpers.translate_agent import translate_banglish_to_bangla
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from pydantic import ValidationError
@@ -49,16 +49,37 @@ async def generate_translation(*, db: Session = Depends(deps.get_db), translatio
         return db_translation
     except Exception as e:
         raise HTTPException(status_code=500, detail="Unexpected error: " + str(e))
-    
+
+
+def add_translation_info_to_db(
+    text: str,
+    translated_text: str,
+    user_id: uuid.UUID,
+    db: Session
+):
+    try:
+        db_translation = TranslationModel(
+            text=text,
+            translated_text=translated_text,
+            user_id=user_id
+        )
+        db.add(db_translation)
+        db.commit()
+        db.refresh(db_translation)
+
+        return True
+        
+    except Exception as e:
+        return False
 
 
 @router.post("/word")
-async def generate_translation(*, db: Session = Depends(deps.get_db), translation_in: str):
+async def generate_translation(*, background_tasks: BackgroundTasks, db: Session = Depends(deps.get_db), translation_in: TranslationCreate):
     try:
         url = "https://www.google.com/inputtools/request"
         
         params = {
-            "text": translation_in,
+            "text": translation_in.text,
             "ime": "transliteration_en_bn",
             "num": 2,
             "ie": "utf-8",
@@ -73,6 +94,12 @@ async def generate_translation(*, db: Session = Depends(deps.get_db), translatio
         
             if data[0] == "SUCCESS" and data[1] and data[1][0][1]:
                 transliterated_text = data[1][0][1][0]  # First suggestion
+
+                background_tasks.add_task(
+                        add_translation_info_to_db, translation_in.text, transliterated_text, translation_in.user_id, db
+                )
+                
+
                 return transliterated_text
             else:
                 raise HTTPException(status_code=400, detail="No transliteration suggestions found")
