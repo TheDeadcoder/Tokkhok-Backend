@@ -78,7 +78,7 @@ def get_points_by_uuid(collection_name:str, uuid:str):
                 ]
             ),
             limit=10,  
-            with_payload=False,
+            with_payload=True,
             with_vectors=False,
             offset=offset
         )
@@ -91,10 +91,8 @@ def get_points_by_uuid(collection_name:str, uuid:str):
         
         offset = next_offset
     
-    all_point_ids = []
-    all_point_ids.extend([point.id for point in points])
-    return all_point_ids
-
+    
+    return all_points
 
 #################################################################################################
 #   Helper function to DELETE all the vector-point IDs for a particular UUID of a file
@@ -143,3 +141,11 @@ def search_in_qdrant(collection_name, query, limit):
         raise http_exc
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error occurred while searching in vectorDB {str(e)}")
+    
+
+def update_payload_only(collection_name: str, point_id, payload: dict):
+    qdrantClient.overwrite_payload(
+        collection_name=collection_name,
+        payload=payload,
+        points=[point_id],
+    )

@@ -1,5 +1,5 @@
 from typing import List
-from app.helpers.qdrant import upload_to_qdrant
+from app.helpers.qdrant import get_points_by_uuid, update_payload_only, upload_to_qdrant, delete_points_by_uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -23,8 +23,8 @@ router = APIRouter()
 @router.get("/", response_model=List[FileInDBBase])
 async def get_all_files(db: Session = Depends(deps.get_db)):
     try:
-        db_userTrain = db.query(FileModel).all()
-        return db_userTrain
+        db_file = db.query(FileModel).all()
+        return db_file
     except Exception as e:
         raise HTTPException(status_code=500, detail="Unexpected error: " + str(e))
     
@@ -104,7 +104,9 @@ def create_bengali_pdf_weasy(bengali_text: str, output_path: str):
     
     HTML(string=html_content).write_pdf(output_path)
     return output_path
-
+#################################################################################################
+# ingest a file
+#################################################################################################
 @router.post("/", response_model=FileInDBBase)
 async def create_file(
     query: FileCreate,
@@ -156,3 +158,80 @@ async def create_file(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating PDF: {str(e)}")
+
+
+#################################################################################################
+# update file metadatas
+#################################################################################################
+@router.put("/{file_id}", response_model=FileInDBBase)
+async def update_file_metadata(*, db: Session = Depends(deps.get_db), file_id: uuid.UUID, fileupdate_in: FileUpdate):
+    
+    try:
+        db_file = db.query(FileModel).filter(FileModel.id == file_id).first()
+        if not db_file:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        if fileupdate_in.file_title:
+            db_file.file_title = fileupdate_in.file_title
+        if fileupdate_in.file_caption:
+            db_file.file_caption = fileupdate_in.file_caption
+        if fileupdate_in.privacy_status:
+            db_file.privacy_status = fileupdate_in.privacy_status
+        if fileupdate_in.status:
+            db_file.status = fileupdate_in.status
+
+        points = get_points_by_uuid(settings.COLLECTION_NAME,str(db_file.id))
+            
+        for point in points:
+            current_payload = point.payload
+                
+                
+            updated_payload = current_payload.copy()
+
+            if fileupdate_in.file_title:
+                updated_payload['file_title'] = fileupdate_in.file_title
+            if fileupdate_in.privacy_status:
+                updated_payload['privacy_status'] = fileupdate_in.privacy_status
+
+            update_payload_only(
+                    collection_name=settings.COLLECTION_NAME,
+                    point_id=point.id,
+                    payload=updated_payload
+            )
+
+        
+
+        
+        db.commit()
+        db.refresh(db_file)
+        return db_file
+    except ValidationError as ve:
+        raise HTTPException(status_code=422, detail=str(ve))
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Unexpected error: " + str(e))
+    
+
+#################################################################################################
+# delete a file
+#################################################################################################
+@router.delete("/{file_id}")
+async def delete_file(file_id: uuid.UUID, db: Session = Depends(deps.get_db)):
+    
+    try:
+        db_file = db.query(FileModel).filter(FileModel.id == file_id).first()
+        if not db_file:
+            raise HTTPException(status_code=404, detail="file not found")
+        
+
+        delete_points_by_uuid(settings.COLLECTION_NAME, str(file_id))
+        db.delete(db_file)
+        db.commit()
+        return {"message": "db_file deleted successfully"}
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Unexpected error: " + str(e))
