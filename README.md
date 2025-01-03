@@ -105,6 +105,7 @@ used [Noto-Sans font from Google fonts](https://fonts.google.com/noto/specimen/N
 - used Google Transliterate API
 - The transliteration is phonetic, meaning it maps input sounds in one script (e.g., Latin/English) to equivalent sounds in the target script (e.g., Bengali).
 - This engine primarily relies on rule-based linguistic mappings and possibly some statistical or probabilistic enhancements for ambiguity resolution.
+- we chose this option for better latency support
 
 ## Audio chat Pipeline
 - we used OpenAI's whisper-1 model for generating transcript for user speech
@@ -113,6 +114,10 @@ used [Noto-Sans font from Google fonts](https://fonts.google.com/noto/specimen/N
 - we fed knowledge and query to AI-agent. It responded in text
 - with browsers SpeechSynthesis api, we can convert the textual response to speech
 - After returning the audio response, we did the db-storing activities using FastAPI's background task
+
+## Latency Handling at the time of translating Banglish to bangla
+- we have used FastAPI's Background task to execute db-operations in a separate thread. When the thread updates the db-operation, we terminate it
+- we return the translation as soon as we get
   
 
 ## deployment

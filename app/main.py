@@ -25,6 +25,7 @@ async def authenticate_request(request: Request, call_next):
         or request.url.path.startswith("/api/v1/chats")
         or request.url.path.startswith("/api/v1/audio_chat")
         or request.url.path.startswith("/api/v1/files")
+        or request.url.path.startswith("/api/v1/translation")
         or request.url.path in [
             "/", 
             "/docs", 
