@@ -56,6 +56,7 @@ execute the following command
 - using postgresql for database
 - Hosted the database in supabase
 - using sqlalchemy as ORM
+- Using Database pooling. Using default pool size = 15
 
 ## Database Migration Tool
 Using Alembic as DB-migration tool
