@@ -84,22 +84,35 @@ def create_bengali_pdf_weasy(bengali_text: str, output_path: str):
     <!DOCTYPE html>
     <html lang="bn">
     <head>
-    <meta charset="utf-8">
-    <style>
-        @font-face {{
-        font-family: "NotoSansBengali";
-        src: url("uploaded_files/noto.ttf");
-        }}
-        body {{
-        font-family: "NotoSansBengali", sans-serif;
-        font-size: 16px;
-        margin: 50px;
-        line-height: 1.5;
-        }}
-    </style>
+        <meta charset="utf-8">
+        <style>
+            @font-face {{
+                font-family: "NotoSansBengali";
+                src: url("uploaded_files/noto.ttf");
+            }}
+            body {{
+                font-family: "NotoSansBengali", sans-serif;
+                font-size: 16px;
+                margin: 50px;
+                line-height: 1.5;
+            }}
+            h1, h2, h3, h4, h5, h6 {{
+                font-weight: bold;
+                margin: 15px 0;
+            }}
+            p {{
+                margin: 10px 0;
+            }}
+            ul, ol {{
+                margin: 10px 20px;
+            }}
+            li {{
+                margin-bottom: 5px;
+            }}
+        </style>
     </head>
     <body>
-    <p>{curated_bd_text}</p>
+        {curated_bd_text}
     </body>
     </html>
     """
