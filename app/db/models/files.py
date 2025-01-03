@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, ForeignKey, TIMESTAMP, UUID
+from sqlalchemy import Column, String, ForeignKey, TIMESTAMP, UUID, ARRAY
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
@@ -11,6 +11,9 @@ class File(Base):
 
     file_title = Column(String, nullable=False)
     file_caption = Column(String, nullable=True)
+
+    tags = Column(ARRAY(String), nullable=True)
+    image_url = Column(String, nullable=True)
 
     uploader_id = Column(UUID(as_uuid=True), ForeignKey('user.id'), nullable=False)
     file_url = Column(String, nullable=False)

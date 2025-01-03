@@ -1,4 +1,5 @@
 from typing import List
+from app.helpers.convert_to_html import create_html_content
 from app.helpers.qdrant import get_points_by_uuid, update_payload_only, upload_to_qdrant, delete_points_by_uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -78,7 +79,7 @@ async def get_all_public_files_cross_platform(db: Session = Depends(deps.get_db)
 PDF_DIR = "uploaded_files"
 
 def create_bengali_pdf_weasy(bengali_text: str, output_path: str):
-    curated_bd_text = bengali_text.replace('\n', '<br>')
+    curated_bd_text = bengali_text
     html_content = f"""
     <!DOCTYPE html>
     <html lang="bn">
@@ -123,11 +124,18 @@ async def create_file(
         file_caption = metadata.file_caption
         file_summary = metadata.file_summary
 
+        curated_text = create_html_content(query.text)
+
+        image_url = "https://btrnqywodfpanpiyjjiw.supabase.co/storage/v1/object/public/contents/default-image.png"
+
+        if query.image_url:
+            image_url = query.image_url
+
         print(file_title, file_caption)
 
         # You mentioned using WeasyPrint
         output_path = os.path.join(PDF_DIR, f"{uuid.uuid4()}.pdf")
-        create_bengali_pdf_weasy(query.text, output_path)
+        create_bengali_pdf_weasy(curated_text, output_path)
 
         # Convert the output_path file to bytes
         with open(output_path, "rb") as f:
@@ -145,7 +153,9 @@ async def create_file(
             uploader_id = query.uploader_id,
             privacy_status = query.privacy_status,
             file_url = public_url,
-            uploaded_at = datetime.now()
+            uploaded_at = datetime.now(),
+            tags = query.tags,
+            image_url = image_url
         )
         db.add(db_file)
         db.commit()

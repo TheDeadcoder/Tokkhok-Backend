@@ -7,6 +7,8 @@ class FileCreate(BaseModel):
     uploader_id: uuid.UUID
     status: Optional[str] = 'Completed'
     privacy_status: Optional[str] = 'private'
+    tags: Optional[List[str]] = []
+    image_url: Optional[str] = None
     text: str
 
 class FileUpdate(BaseModel):
