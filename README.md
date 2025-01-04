@@ -1,5 +1,6 @@
 # Running the Backend
 ## FastAPI Backend
+![তক্ষক](https://btrnqywodfpanpiyjjiw.supabase.co/storage/v1/object/public/contents/tokkhok-logo.png)
 ## Virtual environment
 Make sure python3-venv is in your machine
 ```bash
