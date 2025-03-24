@@ -8,4 +8,4 @@ from app.db.models.usertrain import UserTrain
 from app.db.models.files import File
 from app.db.models.translations import Translation
 from app.db.models.audio_chat import AudioChat
-
+from app.db.models.friends import Friend
