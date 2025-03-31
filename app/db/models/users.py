@@ -20,4 +20,4 @@ class User(Base):
     files = relationship('File', back_populates='uploader')
     translations = relationship('Translation', back_populates='user', cascade='all, delete-orphan')
     audio_chats = relationship("AudioChat", back_populates="user", cascade="all, delete-orphan")
-    friends = relationship('Friend', back_populates='user', cascade='all, delete-orphan')
+    # friends = relationship('Friend', back_populates='user', cascade='all, delete-orphan')

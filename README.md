@@ -82,6 +82,7 @@ used [Noto-Sans font from Google fonts](https://fonts.google.com/noto/specimen/N
 - we upload the pdf in supabase bucket and fetch the link of the file
 - we generate some metadata for the parsed content
 - we vectorize and store the chunks in qdrant
+- We have used **LLamaparse** for pdf file processing
 
 ## RAG chat pipeline
 - The default knowledge base if user's uploaded contents

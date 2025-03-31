@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Optional
 from app.helpers.convert_to_html import create_html_content
+from app.helpers.pdf_parse import process_pdf_and_generate_summaries
 from app.helpers.qdrant import get_points_by_uuid, update_payload_only, upload_to_qdrant, delete_points_by_uuid
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, UploadFile, Form, File as FastAPIFile
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from pydantic import ValidationError
@@ -16,6 +17,7 @@ from app.db.models.users import User as UserModel
 from app.db.models.files import File as FileModel
 from app.core.config import settings
 from app.schemas.files import FileCreate, FileInDBBase, FileUpdate
+from app.core.supabase import supabase
 router = APIRouter()
 
 #################################################################################################
@@ -183,6 +185,62 @@ async def create_file(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating PDF: {str(e)}")
+
+@router.post("/pdf_upload", response_model=FileInDBBase)
+async def create_file(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = FastAPIFile(...),
+    uploader_id: Optional[uuid.UUID] = Form(None),
+    status: Optional[str] = 'Completed',
+    privacy_status: Optional[str] = 'private',
+    tags: Optional[List[str]] = [],
+    image_url: Optional[str] = None,
+    db: Session = Depends(deps.get_db)
+    
+):
+    try:
+        # Read the file content
+        contents = await file.read()
+        
+        
+        public_url = upload_file_to_supabase(contents, uploader_id)
+        file_text = process_pdf_and_generate_summaries(public_url)
+        metadata = file_metadata_create(file_text)
+
+        file_title = metadata.file_title
+        file_caption = metadata.file_caption
+        file_summary = metadata.file_summary
+
+        default_image_url = "https://btrnqywodfpanpiyjjiw.supabase.co/storage/v1/object/public/contents/default-image.png"
+
+        if not image_url:
+            image_url = default_image_url
+
+        db_file = FileModel(
+            file_title = file_title,
+            file_caption = file_caption,
+            uploader_id = uploader_id,
+            privacy_status = privacy_status,
+            file_url = public_url,
+            uploaded_at = datetime.now(),
+            tags = tags,
+            image_url = image_url
+        )
+        db.add(db_file)
+        db.commit()
+        db.refresh(db_file)# return "ok"
+        upload_to_qdrant(str(db_file.id), public_url, file_title, file_summary, settings.COLLECTION_NAME, privacy_status, file_text)
+
+        return db_file
+
+    except HTTPException as http_exc:
+        raise http_exc
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 #################################################################################################
